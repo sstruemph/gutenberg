@@ -2,7 +2,12 @@
  * External dependencies
  */
 import classnames from 'classnames';
-import type { ForwardedRef, KeyboardEvent, UIEvent } from 'react';
+import type {
+	ForwardedRef,
+	KeyboardEvent,
+	PointerEventHandler,
+	UIEvent,
+} from 'react';
 
 /**
  * WordPress dependencies
@@ -20,7 +25,6 @@ import {
 	useInstanceId,
 	useFocusReturn,
 	useFocusOnMount,
-	__experimentalUseFocusOutside as useFocusOutside,
 	useConstrainedTabbing,
 	useMergeRefs,
 } from '@wordpress/compose';
@@ -77,7 +81,6 @@ function UnforwardedModal(
 	const focusOnMountRef = useFocusOnMount( focusOnMount );
 	const constrainedTabbingRef = useConstrainedTabbing();
 	const focusReturnRef = useFocusReturn();
-	const focusOutsideProps = useFocusOutside( onRequestClose );
 	const contentRef = useRef< HTMLDivElement >( null );
 	const childrenContainerRef = useRef< HTMLDivElement >( null );
 
@@ -170,6 +173,10 @@ function UnforwardedModal(
 		[ hasScrolledContent ]
 	);
 
+	const onOverlayPress: PointerEventHandler< HTMLDivElement > = ( event ) => {
+		if ( event.target === event.currentTarget ) onRequestClose( event );
+	};
+
 	return createPortal(
 		// eslint-disable-next-line jsx-a11y/no-static-element-interactions
 		<div
@@ -179,6 +186,9 @@ function UnforwardedModal(
 				overlayClassName
 			) }
 			onKeyDown={ handleEscapeKeyDown }
+			onPointerDown={
+				shouldCloseOnClickOutside ? onOverlayPress : undefined
+			}
 		>
 			<StyleProvider document={ document }>
 				<div
@@ -200,9 +210,6 @@ function UnforwardedModal(
 					aria-labelledby={ contentLabel ? undefined : headingId }
 					aria-describedby={ aria.describedby }
 					tabIndex={ -1 }
-					{ ...( shouldCloseOnClickOutside
-						? focusOutsideProps
-						: {} ) }
 					onKeyDown={ onKeyDown }
 				>
 					<div
