@@ -6,7 +6,7 @@ import { useMemo, useState, useCallback } from '@wordpress/element';
 import { decodeEntities } from '@wordpress/html-entities';
 import { __experimentalBlockPatternsList as BlockPatternsList } from '@wordpress/block-editor';
 import { Button, Modal } from '@wordpress/components';
-import { __ } from '@wordpress/i18n';
+import { __, sprintf } from '@wordpress/i18n';
 import {
 	useEntityRecords,
 	useEntityRecord,
@@ -42,7 +42,6 @@ export default function SwapTemplateButton() {
 		return templates?.filter(
 			( template ) =>
 				template.is_custom &&
-				! template.has_theme_file &&
 				template.id !== currentTemplate.id &&
 				!! template.content.raw // Skip empty templates.
 		);
@@ -66,7 +65,7 @@ export default function SwapTemplateButton() {
 					onRequestClose={ onClose }
 					isFullScreen
 				>
-					<div className="edit-site-start-template-options__modal-content">
+					<div className="edit-site-page-panels__swap-template__modal-content">
 						<TemplatesList
 							templates={ customTemplates }
 							currentTemplate={ currentTemplate }
@@ -113,30 +112,37 @@ function TemplatesList( { templates, currentTemplate, onSelect } ) {
 				templateSlug: template.name,
 			},
 		} );
-		createSuccessNotice( __( 'Template swapped.' ), {
-			type: 'snackbar',
-			actions: [
-				{
-					label: __( 'Undo' ),
-					async onClick() {
-						entitiy.edit(
-							{ template: currentTemplate.slug },
-							{ undoIgnore: true }
-						);
-						await entitiy.save();
-						setEditedPost( {
-							postType: 'wp_template',
-							id: currentTemplate.id,
-							context: {
-								postType,
-								postId,
-								templateSlug: currentTemplate.slug,
-							},
-						} );
+		createSuccessNotice(
+			sprintf(
+				/* translators: The page's title. */
+				__( '"%s" applied.' ),
+				decodeEntities( template.title )
+			),
+			{
+				type: 'snackbar',
+				actions: [
+					{
+						label: __( 'Undo' ),
+						async onClick() {
+							entitiy.edit(
+								{ template: currentTemplate.slug },
+								{ undoIgnore: true }
+							);
+							await entitiy.save();
+							setEditedPost( {
+								postType: 'wp_template',
+								id: currentTemplate.id,
+								context: {
+									postType,
+									postId,
+									templateSlug: currentTemplate.slug,
+								},
+							} );
+						},
 					},
-				},
-			],
-		} );
+				],
+			}
+		);
 		onSelect();
 	};
 	return (
@@ -145,7 +151,6 @@ function TemplatesList( { templates, currentTemplate, onSelect } ) {
 			blockPatterns={ templatesAsPatterns }
 			shownPatterns={ shownTemplates }
 			onClickPattern={ onClickPattern }
-			showTitlesAsTooltip
 		/>
 	);
 }
