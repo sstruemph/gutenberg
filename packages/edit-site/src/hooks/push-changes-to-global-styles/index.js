@@ -79,6 +79,7 @@ const STYLE_PATH_TO_CSS_VAR_INFIX = {
 	'elements.h6.typography.fontFamily': 'font-family',
 	'elements.h6.color.gradient': 'gradient',
 	'color.gradient': 'gradient',
+	'spacing.blockGap': 'spacing',
 	'typography.fontSize': 'font-size',
 	'typography.fontFamily': 'font-family',
 };
@@ -119,7 +120,7 @@ function useChangesToPush( name, attributes ) {
 		// default border style if a border color or width is present.
 		const { color, style, width } = attributes.style?.border || {};
 
-		if ( ( color || width ) && ! style ) {
+		if ( ( attributes.borderColor || color || width ) && ! style ) {
 			changes.push( { path: [ 'border', 'style' ], value: 'solid' } );
 		}
 
