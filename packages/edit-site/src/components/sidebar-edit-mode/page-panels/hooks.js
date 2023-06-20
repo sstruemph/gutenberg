@@ -17,33 +17,38 @@ export function useEditedPostContext() {
 	);
 }
 
-export function useAvailableTemplates() {
+export function useIsPostsPage() {
 	const { postId } = useEditedPostContext();
-	const currentTemplateSlug = useCurrentTemplateSlug();
-	const { templates } = useSelect(
-		( select ) => {
-			const { getEntityRecords, getEntityRecord } = select( coreStore );
-			const siteSettings = getEntityRecord( 'root', 'site' );
-			// TODO: check about this logic...
-			const _isPostsPage = postId === siteSettings?.page_for_posts;
-			return {
-				isPostsPage: _isPostsPage,
-				templates: getEntityRecords( 'postType', 'wp_template', {
-					per_page: -1,
-				} ),
-			};
-		},
+	return useSelect(
+		( select ) =>
+			+postId ===
+			select( coreStore ).getEntityRecord( 'root', 'site' )
+				?.page_for_posts,
 		[ postId ]
+	);
+}
+
+export function useAvailableTemplates() {
+	const currentTemplateSlug = useCurrentTemplateSlug();
+	const isPostsPage = useIsPostsPage();
+	const templates = useSelect(
+		( select ) =>
+			select( coreStore ).getEntityRecords( 'postType', 'wp_template', {
+				per_page: -1,
+			} ),
+		[]
 	);
 	return useMemo(
 		() =>
+			// The posts page template cannot be changed.
+			! isPostsPage &&
 			templates?.filter(
 				( template ) =>
 					template.is_custom &&
 					template.slug !== currentTemplateSlug &&
 					!! template.content.raw // Skip empty templates.
 			),
-		[ templates, currentTemplateSlug ]
+		[ templates, currentTemplateSlug, isPostsPage ]
 	);
 }
 

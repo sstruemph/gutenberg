@@ -10,17 +10,22 @@ import { useEntityRecord } from '@wordpress/core-data';
 /**
  * Internal dependencies
  */
-import { useCurrentTemplateSlug, useEditedPostContext } from './hooks';
+import {
+	useCurrentTemplateSlug,
+	useEditedPostContext,
+	useIsPostsPage,
+} from './hooks';
 import { store as editSiteStore } from '../../../store';
 
 export default function ResetDefaultTemplate( { onClick } ) {
 	const currentTemplateSlug = useCurrentTemplateSlug();
+	const isPostsPage = useIsPostsPage();
 	const { postType, postId } = useEditedPostContext();
 	const entitiy = useEntityRecord( 'postType', postType, postId );
 	const { setPage } = useDispatch( editSiteStore );
 	const { createSuccessNotice } = useDispatch( noticesStore );
 	// The default template in a post is indicated by an empty string.
-	if ( ! currentTemplateSlug ) {
+	if ( ! currentTemplateSlug || isPostsPage ) {
 		return null;
 	}
 	return (
