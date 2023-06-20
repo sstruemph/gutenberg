@@ -268,18 +268,6 @@ _Parameters_
 -   _options_ `[Object]`:
 -   _options.allowUndo_ `[boolean]`: Whether to allow the user to undo reverting the template. Default true.
 
-### setEditedPost
-
-Set's the current block editor edited post.
-
-_Parameters_
-
--   _editedPost_ `Object`: The edited post object.
-
-_Returns_
-
--   `Object`: Action object.
-
 ### setEditedPostContext
 
 Set's the current block editor context.

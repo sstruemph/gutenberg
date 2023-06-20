@@ -220,20 +220,6 @@ export function setEditedPostContext( context ) {
 }
 
 /**
- * Set's the current block editor edited post.
- *
- * @param {Object} editedPost The edited post object.
- *
- * @return {Object} Action object.
- */
-export function setEditedPost( editedPost ) {
-	return {
-		type: 'SET_EDITED_POST',
-		...editedPost,
-	};
-}
-
-/**
  * Resolves the template for a page and displays both. If no path is given, attempts
  * to use the postId to generate a path like `?p=${ postId }`.
  *
@@ -260,9 +246,11 @@ export const setPage =
 			page.path = getPathAndQueryString( entity?.link );
 		}
 
-		const template = await registry
-			.resolveSelect( coreStore )
-			.__experimentalGetTemplateForLink( page.path );
+		const { data: template } = await apiFetch( {
+			url: addQueryArgs( page.path, {
+				'_wp-find-template': true,
+			} ),
+		} );
 
 		if ( ! template ) {
 			return;

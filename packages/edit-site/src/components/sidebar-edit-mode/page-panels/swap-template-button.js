@@ -11,8 +11,6 @@ import { useEntityRecord, store as coreStore } from '@wordpress/core-data';
 import { store as noticesStore } from '@wordpress/notices';
 import { parse } from '@wordpress/blocks';
 import { useAsyncList } from '@wordpress/compose';
-import { addQueryArgs } from '@wordpress/url';
-import apiFetch from '@wordpress/api-fetch';
 
 /**
  * Internal dependencies
@@ -20,6 +18,13 @@ import apiFetch from '@wordpress/api-fetch';
 import { store as editSiteStore } from '../../../store';
 
 const EMPTY_ARRAY = [];
+const DEFAULT_TEMPLATE = {
+	slug: '',
+	title: { rendered: __( 'Default template' ) },
+	content: {
+		raw: '<!-- wp:paragraph --><p></p><!-- /wp:paragraph -->',
+	},
+};
 
 function useEditedPostContext() {
 	return useSelect(
@@ -47,22 +52,29 @@ function useAvailableTemplates() {
 		},
 		[ postType, postId ]
 	);
-	return useMemo(
-		() =>
+	return useMemo( () => {
+		const availableTemplates =
 			templates?.filter(
 				( template ) =>
 					template.is_custom &&
 					template.slug !== currentTemplateSlug &&
 					!! template.content.raw // Skip empty templates.
-			) || EMPTY_ARRAY,
-		[ templates, currentTemplateSlug ]
-	);
+			) || EMPTY_ARRAY;
+		// Append the default template to the list of available templates.
+		if ( currentTemplateSlug ) {
+			availableTemplates.push( DEFAULT_TEMPLATE );
+		}
+		const currentTemplate = currentTemplateSlug
+			? templates?.find( ( { slug } ) => slug === currentTemplateSlug )
+			: DEFAULT_TEMPLATE;
+		return { availableTemplates, currentTemplate };
+	}, [ templates, currentTemplateSlug ] );
 }
 
 export default function SwapTemplateButton() {
 	const [ showSwapTemplateModal, setShowSwapTemplateModal ] =
 		useState( false );
-	const availableTemplates = useAvailableTemplates();
+	const { availableTemplates } = useAvailableTemplates();
 	const onClose = useCallback( () => setShowSwapTemplateModal( false ), [] );
 	if ( ! availableTemplates?.length ) {
 		return null;
@@ -92,58 +104,34 @@ export default function SwapTemplateButton() {
 }
 
 function TemplatesList( { onSelect } ) {
-	const templates = useAvailableTemplates();
+	const { availableTemplates, currentTemplate } = useAvailableTemplates();
 	const { postType, postId } = useEditedPostContext();
 	const entitiy = useEntityRecord( 'postType', postType, postId );
-	const currentTemplate = templates?.find(
-		( { slug } ) => slug === entitiy.record.template
-	);
-	const { setEditedPost } = useDispatch( editSiteStore );
+	const { setPage } = useDispatch( editSiteStore );
 	const { createSuccessNotice } = useDispatch( noticesStore );
 	const templatesAsPatterns = useMemo( () => {
-		const mappedTemplates = templates.map( ( template ) => ( {
+		const mappedTemplates = availableTemplates.map( ( template ) => ( {
 			name: template.slug,
 			blocks: parse( template.content.raw ),
 			title: decodeEntities( template.title.rendered ),
 			id: template.id,
 		} ) );
-		// Append the default template to the list of available templates.
-		if ( entitiy.record.template ) {
-			mappedTemplates.push( {
-				name: '',
-				title: __( 'Default template' ),
-				blocks: parse(
-					'<!-- wp:paragraph --><p></p><!-- /wp:paragraph -->'
-				),
-			} );
-		}
+
 		return mappedTemplates;
-	}, [ templates, entitiy?.record.template ] );
+	}, [ availableTemplates ] );
 	const shownTemplates = useAsyncList( templatesAsPatterns );
 	const onClickPattern = async ( template ) => {
 		entitiy.edit( { template: template.name }, { undoIgnore: true } );
 		await entitiy.save();
-		// If the default template is selected, we need to make a request
-		// to fetch the template information.
-		const { data: newTemplate } = await apiFetch( {
-			url: addQueryArgs( entitiy.record.link, {
-				'_wp-find-template': true,
-			} ),
-		} );
-		setEditedPost( {
-			postType: 'wp_template',
-			id: newTemplate.id,
-			context: {
-				postType,
-				postId,
-				templateSlug: newTemplate.name,
-			},
+		onSelect();
+		await setPage( {
+			context: { postType, postId },
 		} );
 		createSuccessNotice(
 			sprintf(
 				/* translators: The page's title. */
 				__( '"%s" applied.' ),
-				decodeEntities( newTemplate.title )
+				decodeEntities( template.title )
 			),
 			{
 				type: 'snackbar',
@@ -156,14 +144,8 @@ function TemplatesList( { onSelect } ) {
 								{ undoIgnore: true }
 							);
 							await entitiy.save();
-							setEditedPost( {
-								postType: 'wp_template',
-								id: currentTemplate.id,
-								context: {
-									postType,
-									postId,
-									templateSlug: currentTemplate.slug,
-								},
+							await setPage( {
+								context: { postType, postId },
 							} );
 						},
 					},
