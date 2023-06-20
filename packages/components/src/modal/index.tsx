@@ -174,7 +174,11 @@ function UnforwardedModal(
 	);
 
 	const onOverlayPress: PointerEventHandler< HTMLDivElement > = ( event ) => {
-		if ( event.target === event.currentTarget ) onRequestClose( event );
+		if ( event.target === event.currentTarget ) {
+			// Retains focus within the modal so that `useFocusReturn` works.
+			event.preventDefault();
+			onRequestClose( event );
+		}
 	};
 
 	return createPortal(
