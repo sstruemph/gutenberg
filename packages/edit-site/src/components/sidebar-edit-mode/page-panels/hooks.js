@@ -2,7 +2,6 @@
  * WordPress dependencies
  */
 import { useSelect } from '@wordpress/data';
-import { __ } from '@wordpress/i18n';
 import { useMemo } from '@wordpress/element';
 import { store as coreStore } from '@wordpress/core-data';
 
@@ -10,15 +9,6 @@ import { store as coreStore } from '@wordpress/core-data';
  * Internal dependencies
  */
 import { store as editSiteStore } from '../../../store';
-
-const EMPTY_ARRAY = [];
-const DEFAULT_TEMPLATE = {
-	slug: '',
-	title: { rendered: __( 'Default template' ) },
-	content: {
-		raw: '<!-- wp:paragraph --><p></p><!-- /wp:paragraph -->',
-	},
-};
 
 export function useEditedPostContext() {
 	return useSelect(
@@ -45,19 +35,16 @@ export function useAvailableTemplates() {
 		},
 		[ postId ]
 	);
-	return useMemo( () => {
-		const availableTemplates =
+	return useMemo(
+		() =>
 			templates?.filter(
 				( template ) =>
 					template.is_custom &&
 					template.slug !== currentTemplateSlug &&
 					!! template.content.raw // Skip empty templates.
-			) || EMPTY_ARRAY;
-		const currentTemplate = currentTemplateSlug
-			? templates?.find( ( { slug } ) => slug === currentTemplateSlug )
-			: DEFAULT_TEMPLATE;
-		return { availableTemplates, currentTemplate };
-	}, [ templates, currentTemplateSlug ] );
+			),
+		[ templates, currentTemplateSlug ]
+	);
 }
 
 export function useCurrentTemplateSlug() {
