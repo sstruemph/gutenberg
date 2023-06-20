@@ -5,13 +5,6 @@
 	overflow: hidden;
 }
 
-.edit-site-page-panels__edit-template-button,
-.edit-site-page-panels__swap-template-button {
-	justify-content: center;
-	flex: auto;
-}
-
-
 .edit-site-page-panels__swap-template__modal-content .block-editor-block-patterns-list {
 	column-count: 2;
 	column-gap: $grid-unit-30;
