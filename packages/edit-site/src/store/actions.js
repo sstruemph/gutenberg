@@ -245,12 +245,9 @@ export const setPage =
 			// If the entity is undefined for some reason, path will resolve to "/"
 			page.path = getPathAndQueryString( entity?.link );
 		}
-
-		const { data: template } = await apiFetch( {
-			url: addQueryArgs( page.path, {
-				'_wp-find-template': true,
-			} ),
-		} );
+		const template = await registry
+			.resolveSelect( coreStore )
+			.__experimentalGetTemplateForLink( page.path );
 
 		if ( ! template ) {
 			return;
