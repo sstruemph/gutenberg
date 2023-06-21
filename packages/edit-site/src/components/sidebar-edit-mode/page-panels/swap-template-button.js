@@ -46,7 +46,7 @@ export default function SwapTemplateButton() {
 			? __( 'Choose a template' )
 			: sprintf(
 					/* translators: The page's title. */
-					__( 'Save "%s"?' ),
+					__( 'Save: "%s"?' ),
 					decodeEntities( entitiy.record.title.raw )
 			  );
 	const onConfirmSwap = async ( template ) => {
