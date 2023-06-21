@@ -46,8 +46,8 @@ export default function SwapTemplateButton() {
 			? __( 'Choose a template' )
 			: sprintf(
 					/* translators: The page's title. */
-					__( 'Save: "%s"?' ),
-					decodeEntities( entitiy.record.title.raw )
+					__( 'Save "%s"?' ),
+					decodeEntities( entitiy.record.title.rendered )
 			  );
 	const onConfirmSwap = async ( template ) => {
 		entitiy.edit( { template: template.name }, { undoIgnore: true } );
