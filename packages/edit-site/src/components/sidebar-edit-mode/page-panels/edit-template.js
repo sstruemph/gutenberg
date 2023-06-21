@@ -2,17 +2,14 @@
  * WordPress dependencies
  */
 import { useSelect, useDispatch } from '@wordpress/data';
-import { useMemo } from '@wordpress/element';
 import { decodeEntities } from '@wordpress/html-entities';
-import { BlockContextProvider, BlockPreview } from '@wordpress/block-editor';
-import { moreVertical, layout } from '@wordpress/icons';
 import {
-	Icon,
-	DropdownMenu,
+	Button,
+	Dropdown,
 	MenuGroup,
 	MenuItem,
-	__experimentalVStack as VStack,
 	__experimentalHStack as HStack,
+	__experimentalText as Text,
 } from '@wordpress/components';
 import { __ } from '@wordpress/i18n';
 import { store as coreStore } from '@wordpress/core-data';
@@ -29,7 +26,7 @@ const POPOVER_PROPS = {
 };
 
 export default function EditTemplate() {
-	const { context, hasResolved, title, blocks } = useSelect( ( select ) => {
+	const { hasResolved, title } = useSelect( ( select ) => {
 		const { getEditedPostContext, getEditedPostType, getEditedPostId } =
 			select( editSiteStore );
 		const { getEditedEntityRecord, hasFinishedResolution } =
@@ -54,51 +51,44 @@ export default function EditTemplate() {
 
 	const { setHasPageContentFocus } = useDispatch( editSiteStore );
 
-	const blockContext = useMemo(
-		() => ( { ...context, postType: null, postId: null } ),
-		[ context ]
-	);
-
 	if ( ! hasResolved ) {
 		return null;
 	}
 
 	return (
-		<VStack>
-			<HStack justify="space-between">
-				<HStack justify="flex-start">
-					<Icon icon={ layout } />
-					<span>{ decodeEntities( title ) }</span>
-				</HStack>
-				<DropdownMenu
-					icon={ moreVertical }
-					label={ __( 'Options' ) }
-					popoverProps={ POPOVER_PROPS }
-					noIcons
-				>
-					{ ( { onClose } ) => (
-						<>
-							<MenuGroup>
-								<MenuItem
-									onClick={ () => {
-										setHasPageContentFocus( false );
-										onClose();
-									} }
-								>
-									{ __( 'Edit template' ) }
-								</MenuItem>
-								<SwapTemplateButton onClick={ onClose } />
-							</MenuGroup>
-							<ResetDefaultTemplate onClick={ onClose } />
-						</>
-					) }
-				</DropdownMenu>
-			</HStack>
-			<div className="edit-site-page-panels__edit-template-preview">
-				<BlockContextProvider value={ blockContext }>
-					<BlockPreview viewportWidth={ 1024 } blocks={ blocks } />
-				</BlockContextProvider>
-			</div>
-		</VStack>
+		<HStack className="edit-site-summary-field">
+			<Text className="edit-site-summary-field__label">
+				{ __( 'Template' ) }
+			</Text>
+			<Dropdown
+				popoverProps={ POPOVER_PROPS }
+				focusOnMount
+				renderToggle={ ( { onToggle } ) => (
+					<Button
+						className="edit-site-summary-field__trigger"
+						variant="tertiary"
+						onClick={ onToggle }
+					>
+						{ decodeEntities( title ) }
+					</Button>
+				) }
+				renderContent={ ( { onClose } ) => (
+					<>
+						<MenuGroup>
+							<MenuItem
+								onClick={ () => {
+									setHasPageContentFocus( false );
+									onClose();
+								} }
+							>
+								{ __( 'Edit template' ) }
+							</MenuItem>
+							<SwapTemplateButton onClick={ onClose } />
+						</MenuGroup>
+						<ResetDefaultTemplate onClick={ onClose } />
+					</>
+				) }
+			/>
+		</HStack>
 	);
 }
