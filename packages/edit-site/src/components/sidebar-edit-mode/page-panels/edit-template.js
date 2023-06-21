@@ -4,8 +4,7 @@
 import { useSelect, useDispatch } from '@wordpress/data';
 import { decodeEntities } from '@wordpress/html-entities';
 import {
-	Button,
-	Dropdown,
+	DropdownMenu,
 	MenuGroup,
 	MenuItem,
 	__experimentalHStack as HStack,
@@ -61,19 +60,15 @@ export default function EditTemplate() {
 			<Text className="edit-site-summary-field__label">
 				{ __( 'Template' ) }
 			</Text>
-			<Dropdown
+			<DropdownMenu
 				popoverProps={ POPOVER_PROPS }
 				focusOnMount
-				renderToggle={ ( { onToggle } ) => (
-					<Button
-						className="edit-site-summary-field__trigger"
-						variant="tertiary"
-						onClick={ onToggle }
-					>
-						{ decodeEntities( title ) }
-					</Button>
-				) }
-				renderContent={ ( { onClose } ) => (
+				toggleProps={ { variant: 'tertiary' } }
+				label={ decodeEntities( title ) }
+				text={ decodeEntities( title ) }
+				icon={ null }
+			>
+				{ ( { onClose } ) => (
 					<>
 						<MenuGroup>
 							<MenuItem
@@ -89,7 +84,7 @@ export default function EditTemplate() {
 						<ResetDefaultTemplate onClick={ onClose } />
 					</>
 				) }
-			/>
+			</DropdownMenu>
 		</HStack>
 	);
 }
