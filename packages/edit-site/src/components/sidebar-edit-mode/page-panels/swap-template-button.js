@@ -103,11 +103,7 @@ export default function SwapTemplateButton() {
 								<FlexItem>
 									<Button
 										variant="tertiary"
-										onClick={ () =>
-											setModalContent(
-												modalContentMap.templatesList
-											)
-										}
+										onClick={ onClose }
 									>
 										{ __( 'Cancel' ) }
 									</Button>
