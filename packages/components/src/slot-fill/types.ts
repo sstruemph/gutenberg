@@ -62,7 +62,7 @@ export type BubblesVirtuallySlotFillContext = {
 	) => void;
 };
 
-export type BubblesVirtuallySlotFillProviderProps = {
+export type SlotFillProviderProps = {
 	/**
 	 * The children elements.
 	 */
