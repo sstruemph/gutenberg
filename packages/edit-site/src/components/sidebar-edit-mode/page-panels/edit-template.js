@@ -22,6 +22,7 @@ import SwapTemplateButton from './swap-template-button';
 import ResetDefaultTemplate from './reset-default-template';
 
 const POPOVER_PROPS = {
+	className: 'edit-site-page-panels-edit-template__dropdown',
 	placement: 'bottom-start',
 };
 
