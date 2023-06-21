@@ -44,7 +44,11 @@ export default function SwapTemplateButton() {
 	const modalTitle =
 		modalContent === modalContentMap.templatesList
 			? __( 'Choose a template' )
-			: __( 'Update page template?' );
+			: sprintf(
+					/* translators: The page's title. */
+					__( 'Save "%s"?' ),
+					decodeEntities( entitiy.record.title.raw )
+			  );
 	const onConfirmSwap = async ( template ) => {
 		entitiy.edit( { template: template.name }, { undoIgnore: true } );
 		await entitiy.save();
@@ -116,7 +120,7 @@ export default function SwapTemplateButton() {
 											onConfirmSwap( selectedTemplate )
 										}
 									>
-										{ __( 'Swap template' ) }
+										{ __( 'Save' ) }
 									</Button>
 								</FlexItem>
 							</Flex>
