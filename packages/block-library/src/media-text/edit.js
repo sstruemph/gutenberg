@@ -171,13 +171,16 @@ function MediaTextEdit( {
 		[ featuredImage ]
 	);
 
+	const featuredImageURL = featuredImageMedia?.source_url;
+	const featuredImageAlt = featuredImageMedia?.alt_text;
+
 	const toggleUseFeaturedImage = () => {
 		setAttributes( {
 			imageFill: false,
 			mediaType: 'image',
-			mediaId: featuredImage,
-			mediaUrl: featuredImageMedia?.source_url,
-			mediaAlt: featuredImageMedia?.alt_text,
+			mediaId: undefined,
+			mediaUrl: undefined,
+			mediaAlt: undefined,
 			useFeaturedImage: ! useFeaturedImage,
 		} );
 	};
@@ -286,24 +289,30 @@ function MediaTextEdit( {
 					}
 				/>
 			) }
-			{ imageFill && mediaUrl && mediaType === 'image' && (
-				<FocalPointPicker
-					__nextHasNoMarginBottom
-					label={ __( 'Focal point picker' ) }
-					url={ mediaUrl }
-					value={ focalPoint }
-					onChange={ ( value ) =>
-						setAttributes( { focalPoint: value } )
-					}
-					onDragStart={ imperativeFocalPointPreview }
-					onDrag={ imperativeFocalPointPreview }
-				/>
-			) }
+			{ imageFill &&
+				( mediaUrl || featuredImageURL ) &&
+				mediaType === 'image' && (
+					<FocalPointPicker
+						__nextHasNoMarginBottom
+						label={ __( 'Focal point picker' ) }
+						url={
+							useFeaturedImage && featuredImageURL
+								? featuredImageURL
+								: mediaUrl
+						}
+						value={ focalPoint }
+						onChange={ ( value ) =>
+							setAttributes( { focalPoint: value } )
+						}
+						onDragStart={ imperativeFocalPointPreview }
+						onDrag={ imperativeFocalPointPreview }
+					/>
+				) }
 			{ mediaType === 'image' && (
 				<TextareaControl
 					__nextHasNoMarginBottom
 					label={ __( 'Alternative text' ) }
-					value={ mediaAlt }
+					value={ mediaAlt || featuredImageAlt }
 					onChange={ onMediaAltChange }
 					help={
 						<>
@@ -327,7 +336,7 @@ function MediaTextEdit( {
 					) }
 				/>
 			) }
-			{ mediaUrl && (
+			{ ( mediaUrl || featuredImageURL ) && (
 				<RangeControl
 					__nextHasNoMarginBottom
 					label={ __( 'Media width' ) }
@@ -387,7 +396,11 @@ function MediaTextEdit( {
 						onChangeUrl={ onSetHref }
 						linkDestination={ linkDestination }
 						mediaType={ mediaType }
-						mediaUrl={ image && image.source_url }
+						mediaUrl={
+							useFeaturedImage && featuredImageURL
+								? featuredImageURL
+								: image && image.source_url
+						}
 						mediaLink={ image && image.link }
 						linkTarget={ linkTarget }
 						linkClass={ linkClass }
@@ -417,6 +430,8 @@ function MediaTextEdit( {
 						mediaUrl,
 						mediaWidth,
 						useFeaturedImage,
+						featuredImageURL,
+						featuredImageAlt,
 					} }
 				/>
 				{ mediaPosition !== 'right' && <div { ...innerBlocksProps } /> }
