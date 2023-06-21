@@ -18,58 +18,37 @@ import { useAsyncList } from '@wordpress/compose';
 import { store as editSiteStore } from '../../../store';
 import { useAvailableTemplates, useEditedPostContext } from './hooks';
 
-export default function SwapTemplateButton() {
-	const [ showSwapTemplateModal, setShowSwapTemplateModal ] =
-		useState( false );
-	const availableTemplates = useAvailableTemplates();
-	const onClose = useCallback( () => setShowSwapTemplateModal( false ), [] );
-	if ( ! availableTemplates?.length ) {
-		return null;
-	}
-	return (
-		<>
-			<MenuItem onClick={ () => setShowSwapTemplateModal( true ) }>
-				{ __( 'Swap template' ) }
-			</MenuItem>
-			{ showSwapTemplateModal && (
-				<Modal
-					title={ __( 'Choose a template' ) }
-					onRequestClose={ onClose }
-					isFullScreen
-				>
-					<div className="edit-site-page-panels__swap-template__modal-content">
-						<TemplatesList closeSwapTemplateModal={ onClose } />
-					</div>
-				</Modal>
-			) }
-		</>
-	);
-}
+const modalContentMap = {
+	templatesList: 1,
+	confirmSwap: 2,
+};
 
-function TemplatesList( { closeSwapTemplateModal } ) {
-	const [ showModal, setShowModal ] = useState( false );
+export default function SwapTemplateButton() {
 	const [ selectedTemplate, setSelectedTemplate ] = useState();
-	const onClose = useCallback( () => setShowModal( false ), [] );
+	const [ showModal, setShowModal ] = useState( false );
+	const [ modalContent, setModalContent ] = useState(
+		modalContentMap.templatesList
+	);
 	const availableTemplates = useAvailableTemplates();
+	const onClose = useCallback( () => {
+		setShowModal( false );
+		setModalContent( modalContentMap.templatesList );
+	}, [] );
 	const { postType, postId } = useEditedPostContext();
 	const entitiy = useEntityRecord( 'postType', postType, postId );
 	const { setPage } = useDispatch( editSiteStore );
 	const { createSuccessNotice } = useDispatch( noticesStore );
-	const templatesAsPatterns = useMemo(
-		() =>
-			availableTemplates.map( ( template ) => ( {
-				name: template.slug,
-				blocks: parse( template.content.raw ),
-				title: decodeEntities( template.title.rendered ),
-				id: template.id,
-			} ) ),
-		[ availableTemplates ]
-	);
-	const shownTemplates = useAsyncList( templatesAsPatterns );
+	if ( ! availableTemplates?.length ) {
+		return null;
+	}
+	const modalTitle =
+		modalContent === modalContentMap.templatesList
+			? __( 'Choose a template' )
+			: __( 'Update page template?' );
 	const onConfirmSwap = async ( template ) => {
 		entitiy.edit( { template: template.name }, { undoIgnore: true } );
 		await entitiy.save();
-		closeSwapTemplateModal();
+		onClose();
 		await setPage( {
 			context: { postType, postId },
 		} );
@@ -84,45 +63,90 @@ function TemplatesList( { closeSwapTemplateModal } ) {
 	};
 	return (
 		<>
-			<BlockPatternsList
-				label={ __( 'Templates' ) }
-				blockPatterns={ templatesAsPatterns }
-				shownPatterns={ shownTemplates }
-				onClickPattern={ ( template ) => {
-					setShowModal( true );
-					setSelectedTemplate( template );
-				} }
-			/>
+			<MenuItem onClick={ () => setShowModal( true ) }>
+				{ __( 'Swap template' ) }
+			</MenuItem>
 			{ showModal && (
 				<Modal
-					title={ __( 'Update page template?' ) }
+					title={ modalTitle }
 					onRequestClose={ onClose }
+					isFullScreen={
+						modalContent === modalContentMap.templatesList
+					}
 				>
-					{ __( 'Template swaps are published immediately.' ) }
-					<Flex
-						className="edit-site-page-panels__swap-template__confirm-modal__actions"
-						justify="flex-end"
-						expanded={ false }
-					>
-						<FlexItem>
-							<Button variant="tertiary" onClick={ onClose }>
-								{ __( 'Cancel' ) }
-							</Button>
-						</FlexItem>
-						<FlexItem>
-							<Button
-								variant="primary"
-								type="submit"
-								onClick={ () =>
-									onConfirmSwap( selectedTemplate )
-								}
+					{ modalContent === modalContentMap.templatesList && (
+						<div className="edit-site-page-panels__swap-template__modal-content">
+							<TemplatesList
+								onSelect={ ( template ) => {
+									setModalContent(
+										modalContentMap.confirmSwap
+									);
+									setSelectedTemplate( template );
+								} }
+							/>
+						</div>
+					) }
+					{ modalContent === modalContentMap.confirmSwap && (
+						<>
+							{ __(
+								'Template swaps are published immediately.'
+							) }
+							<Flex
+								className="edit-site-page-panels__swap-template__confirm-modal__actions"
+								justify="flex-end"
+								expanded={ false }
 							>
-								{ __( 'Swap template' ) }
-							</Button>
-						</FlexItem>
-					</Flex>
+								<FlexItem>
+									<Button
+										variant="tertiary"
+										onClick={ () =>
+											setModalContent(
+												modalContentMap.templatesList
+											)
+										}
+									>
+										{ __( 'Cancel' ) }
+									</Button>
+								</FlexItem>
+								<FlexItem>
+									<Button
+										variant="primary"
+										type="submit"
+										onClick={ () =>
+											onConfirmSwap( selectedTemplate )
+										}
+									>
+										{ __( 'Swap template' ) }
+									</Button>
+								</FlexItem>
+							</Flex>
+						</>
+					) }
 				</Modal>
 			) }
 		</>
+	);
+}
+
+function TemplatesList( { onSelect } ) {
+	const availableTemplates = useAvailableTemplates();
+	const templatesAsPatterns = useMemo(
+		() =>
+			availableTemplates.map( ( template ) => ( {
+				name: template.slug,
+				blocks: parse( template.content.raw ),
+				title: decodeEntities( template.title.rendered ),
+				id: template.id,
+			} ) ),
+		[ availableTemplates ]
+	);
+	const shownTemplates = useAsyncList( templatesAsPatterns );
+	return (
+		<BlockPatternsList
+			label={ __( 'Templates' ) }
+			blockPatterns={ templatesAsPatterns }
+			shownPatterns={ shownTemplates }
+			onClickPattern={ onSelect }
+		/>
 	);
 }
