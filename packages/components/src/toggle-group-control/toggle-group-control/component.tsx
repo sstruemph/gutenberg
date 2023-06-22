@@ -28,8 +28,6 @@ import * as styles from './styles';
 import { ToggleGroupControlAsRadioGroup } from './as-radio-group';
 import { ToggleGroupControlAsButtonGroup } from './as-button-group';
 
-const noop = () => {};
-
 function UnconnectedToggleGroupControl(
 	props: WordPressComponentProps< ToggleGroupControlProps, 'div', false >,
 	forwardedRef: ForwardedRef< any >
@@ -43,7 +41,7 @@ function UnconnectedToggleGroupControl(
 		label,
 		hideLabelFromVision = false,
 		help,
-		onChange = noop,
+		onChange,
 		size = 'default',
 		value,
 		children,
