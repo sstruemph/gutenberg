@@ -29,7 +29,13 @@ function Slot(
 	>,
 	forwardedRef: ForwardedRef< any >
 ) {
-	const { name, fillProps = {}, as: Component = 'div', ...restProps } = props;
+	const {
+		name,
+		fillProps = {},
+		children,
+		as: Component = 'div',
+		...restProps
+	} = props;
 	const { registerSlot, unregisterSlot, ...registry } =
 		useContext( SlotFillContext );
 	const ref = useRef();
@@ -52,8 +58,6 @@ function Slot(
 	} );
 
 	return (
-		// TODO: REMOVE ts-ignore
-		// @ts-ignore
 		<View
 			as={ Component }
 			ref={ useMergeRefs( [ forwardedRef, ref ] ) }
