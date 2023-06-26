@@ -35,6 +35,7 @@ import type {
 	Screen,
 } from '../types';
 import { patternMatch, findParent } from '../utils/router';
+import { useControlledValue } from '../../utils';
 
 type MatchedPath = ReturnType< typeof patternMatch >;
 type ScreenAction = { type: string; screen: Screen };
@@ -59,16 +60,23 @@ function UnconnectedNavigatorProvider(
 	props: WordPressComponentProps< NavigatorProviderProps, 'div' >,
 	forwardedRef: ForwardedRef< any >
 ) {
-	const { initialPath, children, className, ...otherProps } =
-		useContextSystem( props, 'NavigatorProvider' );
+	const {
+		initialPath,
+		location: locationProp,
+		onChange,
+		children,
+		className,
+		...otherProps
+	} = useContextSystem( props, 'NavigatorProvider' );
+	const [ location, updatedLocation ] = useControlledValue( {
+		onChange,
+		value: locationProp,
+		defaultValue: { path: initialPath },
+	} );
 
 	const [ locationHistory, setLocationHistory ] = useState<
 		NavigatorLocation[]
-	>( [
-		{
-			path: initialPath,
-		},
-	] );
+	>( [ location ?? { path: initialPath } ] );
 	const currentLocationHistory = useRef< NavigatorLocation[] >( [] );
 	const [ screens, dispatch ] = useReducer( screensReducer, [] );
 	const currentScreens = useRef< Screen[] >( [] );
@@ -78,6 +86,74 @@ function UnconnectedNavigatorProvider(
 	useEffect( () => {
 		currentLocationHistory.current = locationHistory;
 	}, [ locationHistory ] );
+	useEffect( () => {
+		if ( ! location ) {
+			return;
+		}
+
+		const {
+			focusTargetSelector,
+			isBack = false,
+			skipFocus = false,
+			path: destinationPath,
+			...restOptions
+		} = location;
+
+		const isNavigatingToPreviousPath =
+			isBack &&
+			currentLocationHistory.current.length > 1 &&
+			currentLocationHistory.current[
+				currentLocationHistory.current.length - 2
+			].path === destinationPath;
+
+		if ( isNavigatingToPreviousPath ) {
+			setLocationHistory( ( prevLocationHistory ) => {
+				if ( prevLocationHistory.length <= 1 ) {
+					return prevLocationHistory;
+				}
+				return [
+					...prevLocationHistory.slice( 0, -2 ),
+					{
+						...prevLocationHistory[
+							prevLocationHistory.length - 2
+						],
+						isBack: true,
+						hasRestoredFocus: false,
+					},
+				];
+			} );
+			return;
+		}
+
+		setLocationHistory( ( prevLocationHistory ) => {
+			const newLocation = {
+				...restOptions,
+				path: destinationPath,
+				isBack,
+				hasRestoredFocus: false,
+				skipFocus,
+			};
+
+			if ( prevLocationHistory.length < 1 ) {
+				return [ newLocation ];
+			}
+
+			return [
+				...prevLocationHistory.slice(
+					prevLocationHistory.length > MAX_HISTORY_LENGTH - 1 ? 1 : 0,
+					-1
+				),
+				// Assign `focusTargetSelector` to the previous location in history
+				// (the one we just navigated from).
+				{
+					...prevLocationHistory[ prevLocationHistory.length - 1 ],
+					focusTargetSelector,
+				},
+				newLocation,
+			];
+		} );
+	}, [ location ] );
+
 	const currentMatch = useRef< MatchedPath >();
 	const matchedPath = useMemo( () => {
 		let currentPath: string | undefined;
@@ -91,8 +167,8 @@ function UnconnectedNavigatorProvider(
 			return undefined;
 		}
 
-		const resolvePath = ( path: string ) => {
-			const newMatch = patternMatch( path, screens );
+		const resolvePath = ( pathToResolve: string ) => {
+			const newMatch = patternMatch( pathToResolve, screens );
 
 			// If the new match is the same as the current match,
 			// return the previous one for performance reasons.
@@ -127,75 +203,26 @@ function UnconnectedNavigatorProvider(
 	);
 
 	const goBack: NavigatorContextType[ 'goBack' ] = useCallback( () => {
-		setLocationHistory( ( prevLocationHistory ) => {
-			if ( prevLocationHistory.length <= 1 ) {
-				return prevLocationHistory;
-			}
-			return [
-				...prevLocationHistory.slice( 0, -2 ),
-				{
-					...prevLocationHistory[ prevLocationHistory.length - 2 ],
-					isBack: true,
-					hasRestoredFocus: false,
-				},
-			];
+		if ( currentLocationHistory.current.length < 2 ) {
+			return;
+		}
+
+		updatedLocation( {
+			isBack: true,
+			path: currentLocationHistory.current[
+				currentLocationHistory.current.length - 2
+			].path,
 		} );
-	}, [] );
+	}, [ updatedLocation ] );
 
 	const goTo: NavigatorContextType[ 'goTo' ] = useCallback(
-		( path, options = {} ) => {
-			const {
-				focusTargetSelector,
-				isBack = false,
-				skipFocus = false,
-				...restOptions
-			} = options;
-
-			const isNavigatingToPreviousPath =
-				isBack &&
-				currentLocationHistory.current.length > 1 &&
-				currentLocationHistory.current[
-					currentLocationHistory.current.length - 2
-				].path === path;
-
-			if ( isNavigatingToPreviousPath ) {
-				goBack();
-				return;
-			}
-
-			setLocationHistory( ( prevLocationHistory ) => {
-				const newLocation = {
-					...restOptions,
-					path,
-					isBack,
-					hasRestoredFocus: false,
-					skipFocus,
-				};
-
-				if ( prevLocationHistory.length < 1 ) {
-					return [ newLocation ];
-				}
-
-				return [
-					...prevLocationHistory.slice(
-						prevLocationHistory.length > MAX_HISTORY_LENGTH - 1
-							? 1
-							: 0,
-						-1
-					),
-					// Assign `focusTargetSelector` to the previous location in history
-					// (the one we just navigated from).
-					{
-						...prevLocationHistory[
-							prevLocationHistory.length - 1
-						],
-						focusTargetSelector,
-					},
-					newLocation,
-				];
+		( destinationPath, options = {} ) => {
+			updatedLocation( {
+				...options,
+				path: destinationPath,
 			} );
 		},
-		[ goBack ]
+		[ updatedLocation ]
 	);
 
 	const goToParent: NavigatorContextType[ 'goToParent' ] =

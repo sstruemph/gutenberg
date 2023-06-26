@@ -4,6 +4,11 @@
 import type { ComponentMeta, ComponentStory } from '@storybook/react';
 
 /**
+ * WordPress dependencies
+ */
+import { useState } from '@wordpress/element';
+
+/**
  * Internal dependencies
  */
 import Button from '../../button';
@@ -18,6 +23,7 @@ import {
 	NavigatorToParentButton,
 	useNavigator,
 } from '..';
+import type { NavigatorLocation } from '../types';
 
 const meta: ComponentMeta< typeof NavigatorProvider > = {
 	component: NavigatorProvider,
@@ -366,3 +372,54 @@ SkipFocus.args = {
 		</>
 	),
 };
+
+const ControlledNavigatorTemplate: ComponentStory<
+	typeof NavigatorProvider
+> = ( { style } ) => {
+	const [ location, setLocation ] = useState< NavigatorLocation >( {
+		path: '/',
+	} );
+	return (
+		<NavigatorProvider
+			location={ location }
+			onChange={ setLocation }
+			style={ { ...style, height: '100vh', maxHeight: '450px' } }
+		>
+			<NavigatorScreen path="/">
+				<Card>
+					<CardBody>
+						<NavigatorButton variant="secondary" path="/child1">
+							Go to first child.
+						</NavigatorButton>
+						<NavigatorButton variant="secondary" path="/child2">
+							Go to second child.
+						</NavigatorButton>
+					</CardBody>
+				</Card>
+			</NavigatorScreen>
+			<NavigatorScreen path="/child1">
+				<Card>
+					<CardBody>
+						This is the first child
+						<NavigatorToParentButton variant="secondary">
+							Go back to parent
+						</NavigatorToParentButton>
+					</CardBody>
+				</Card>
+			</NavigatorScreen>
+			<NavigatorScreen path="/child2">
+				<Card>
+					<CardBody>
+						This is the second child
+						<NavigatorToParentButton variant="secondary">
+							Go back to parent
+						</NavigatorToParentButton>
+					</CardBody>
+				</Card>
+			</NavigatorScreen>
+		</NavigatorProvider>
+	);
+};
+
+export const ControlledNavigator: ComponentStory< typeof NavigatorProvider > =
+	ControlledNavigatorTemplate.bind( {} );
