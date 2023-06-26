@@ -15,6 +15,7 @@ import {
 	__experimentalHeading as Heading,
 	__experimentalHStack as HStack,
 	__unstableCompositeItem as CompositeItem,
+	Button,
 } from '@wordpress/components';
 import { useInstanceId } from '@wordpress/compose';
 import { useDispatch } from '@wordpress/data';
@@ -41,7 +42,7 @@ export default function GridItem( { categoryId, composite, icon, item } ) {
 	const { createErrorNotice, createSuccessNotice } =
 		useDispatch( noticesStore );
 
-	const { onClick } = useLink( {
+	const { onClick, href } = useLink( {
 		postType: item.type,
 		postId: item.type === USER_PATTERNS ? item.id : item.name,
 		categoryId,
@@ -128,7 +129,15 @@ export default function GridItem( { categoryId, composite, icon, item } ) {
 						className="edit-site-library__pattern-title"
 					>
 						{ icon && <Icon icon={ icon } /> }
-						<Heading level={ 5 }>{ item.title }</Heading>
+						<Heading level={ 5 }>
+							<Button
+								href={ href }
+								variant="link"
+								onClick={ onClick }
+							>
+								{ item.title }
+							</Button>
+						</Heading>
 					</HStack>
 					{ item.type === USER_PATTERNS && (
 						<DropdownMenu
