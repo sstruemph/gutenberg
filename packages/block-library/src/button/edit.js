@@ -105,6 +105,7 @@ function ButtonEdit( props ) {
 	function onKeyDown( event ) {
 		if ( isKeyboardEvent.primary( event, 'k' ) ) {
 			startEditing( event );
+			event.stopPropagation();
 		} else if ( isKeyboardEvent.primaryShift( event, 'k' ) ) {
 			unlink();
 			richTextRef.current?.focus();
