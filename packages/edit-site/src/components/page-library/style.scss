@@ -93,6 +93,16 @@
 .edit-site-library__pattern-title {
 	color: $gray-600;
 
+	.is-link {
+		text-decoration: none;
+		color: $gray-600;
+
+		&:hover,
+		&:focus {
+			color: $white;
+		}
+	}
+
 	svg {
 		border-radius: $grid-unit-05;
 		background: var(--wp-block-synced-color);
