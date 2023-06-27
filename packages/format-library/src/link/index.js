@@ -74,7 +74,12 @@ function Edit( {
 
 	return (
 		<>
-			<RichTextShortcut type="primary" character="k" onUse={ addLink } />
+			<RichTextShortcut
+				type="primary"
+				character="k"
+				onUse={ addLink }
+				isTerminal
+			/>
 			<RichTextShortcut
 				type="primaryShift"
 				character="k"

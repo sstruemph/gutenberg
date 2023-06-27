@@ -9,7 +9,7 @@ import { useEffect, useContext, useRef } from '@wordpress/element';
  */
 import { keyboardShortcutContext } from './';
 
-export function RichTextShortcut( { character, type, onUse } ) {
+export function RichTextShortcut( { character, type, onUse, isTerminal } ) {
 	const keyboardShortcuts = useContext( keyboardShortcutContext );
 	const onUseRef = useRef();
 	onUseRef.current = onUse;
@@ -19,6 +19,7 @@ export function RichTextShortcut( { character, type, onUse } ) {
 			if ( isKeyboardEvent[ type ]( event, character ) ) {
 				onUseRef.current();
 				event.preventDefault();
+				if ( isTerminal ) event.stopPropagation();
 			}
 		}
 
