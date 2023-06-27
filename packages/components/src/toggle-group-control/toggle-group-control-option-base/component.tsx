@@ -86,6 +86,7 @@ function ToggleGroupControlOptionBase(
 		value,
 		children,
 		showTooltip = false,
+		onFocus: onFocusProp,
 		...otherButtonProps
 	} = buttonProps;
 
@@ -134,6 +135,7 @@ function ToggleGroupControlOptionBase(
 				{ isDeselectable ? (
 					<button
 						{ ...commonProps }
+						onFocus={ onFocusProp }
 						aria-pressed={ isPressed }
 						type="button"
 						onClick={ buttonOnClick }
@@ -141,20 +143,17 @@ function ToggleGroupControlOptionBase(
 						<ButtonContentView>{ children }</ButtonContentView>
 					</button>
 				) : (
-					// @ts-expect-error Even if we're passing `button` through the
-					// `render` prop, the component is still expecting `input` props
 					<Radio
-						{ ...commonProps }
-						onFocus={ (
-							event: React.FocusEvent< HTMLInputElement >
-						) => {
-							// @ts-expect-error Even if we're passing `button` through the
-							// `render` prop, the component is still expecting `input` props
-							commonProps.onFocus?.( event );
-							if ( event.defaultPrevented ) return;
-							toggleGroupControlContext.setValue( value );
-						} }
-						render={ <button /> }
+						render={
+							<button
+								{ ...commonProps }
+								onFocus={ ( event ) => {
+									onFocusProp?.( event );
+									if ( event.defaultPrevented ) return;
+									toggleGroupControlContext.setValue( value );
+								} }
+							/>
+						}
 						value={ value }
 					>
 						<ButtonContentView>{ children }</ButtonContentView>
