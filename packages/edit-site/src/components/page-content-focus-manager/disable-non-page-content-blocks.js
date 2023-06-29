@@ -3,16 +3,13 @@
  */
 import { createHigherOrderComponent } from '@wordpress/compose';
 import { addFilter, removeFilter } from '@wordpress/hooks';
-import { privateApis as blockEditorPrivateApis } from '@wordpress/block-editor';
+import { useBlockEditingMode } from '@wordpress/block-editor';
 import { useEffect } from '@wordpress/element';
 
 /**
  * Internal dependencies
  */
-import { unlock } from '../../lock-unlock';
 import { PAGE_CONTENT_BLOCK_TYPES } from './constants';
-
-const { useBlockEditingMode } = unlock( blockEditorPrivateApis );
 
 /**
  * Component that when rendered, makes it so that the site editor allows only

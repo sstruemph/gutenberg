@@ -12,6 +12,7 @@ import {
 	InspectorAdvancedControls,
 	store as blockEditorStore,
 	privateApis as blockEditorPrivateApis,
+	useBlockEditingMode,
 } from '@wordpress/block-editor';
 import { BaseControl, Button } from '@wordpress/components';
 import { __, sprintf } from '@wordpress/i18n';
@@ -29,9 +30,7 @@ import { store as noticesStore } from '@wordpress/notices';
 import { useSupportedStyles } from '../../components/global-styles/hooks';
 import { unlock } from '../../lock-unlock';
 
-const { GlobalStylesContext, useBlockEditingMode } = unlock(
-	blockEditorPrivateApis
-);
+const { GlobalStylesContext } = unlock( blockEditorPrivateApis );
 
 // TODO: Temporary duplication of constant in @wordpress/block-editor. Can be
 // removed by moving PushChangesToGlobalStylesControl to
