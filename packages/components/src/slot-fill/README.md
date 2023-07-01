@@ -106,10 +106,10 @@ const ToolbarItem = () => (
 const Toolbar = () => {
 	const hideToolbar = () => {
 		console.log( 'Hide toolbar' );
-	}
+	};
 	return (
 		<div className="toolbar">
-			<Slot fillProps={ { hideToolbar } }/>
+			<Slot fillProps={ { hideToolbar } } />
 		</div>
 	);
 };
