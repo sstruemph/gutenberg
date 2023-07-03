@@ -36,6 +36,10 @@
 		color: var(--wp-block-synced-color);
 	}
 
+	.block-editor-block-icon {
+		flex-shrink: 0;
+	}
+
 	h1 {
 		white-space: nowrap;
 		overflow: hidden;
@@ -69,9 +73,9 @@
 .edit-site-document-actions__back.components-button.has-icon.has-text {
 	min-width: $button-size;
 	flex-shrink: 0;
-	z-index: 1;
 	color: $gray-700;
 	gap: 0;
+	z-index: 1;
 
 	&:hover {
 		color: currentColor;
