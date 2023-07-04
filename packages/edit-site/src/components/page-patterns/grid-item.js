@@ -37,6 +37,7 @@ import { DELETE, BACKSPACE } from '@wordpress/keycodes';
  * Internal dependencies
  */
 import RenameMenuItem from './rename-menu-item';
+import DuplicateMenuItem from './duplicate-menu-item';
 import { PATTERNS, TEMPLATE_PARTS, USER_PATTERNS } from './utils';
 import { store as editSiteStore } from '../../store';
 import { useLink } from '../routes/link';
@@ -214,6 +215,10 @@ export default function GridItem( { categoryId, composite, icon, item } ) {
 							{ ( { onClose } ) => (
 								<MenuGroup>
 									<RenameMenuItem
+										item={ item }
+										onClose={ onClose }
+									/>
+									<DuplicateMenuItem
 										item={ item }
 										onClose={ onClose }
 									/>
