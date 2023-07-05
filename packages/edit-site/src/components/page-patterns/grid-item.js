@@ -233,6 +233,7 @@ export default function GridItem( { categoryId, composite, icon, item } ) {
 			</div>
 			{ isDeleteDialogOpen && (
 				<ConfirmDialog
+					confirmButtonText={ __( 'Delete' ) }
 					onConfirm={ deleteItem }
 					onCancel={ () => setIsDeleteDialogOpen( false ) }
 				>
