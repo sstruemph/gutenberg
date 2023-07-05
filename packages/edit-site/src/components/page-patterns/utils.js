@@ -1,3 +1,8 @@
+/**
+ * WordPress dependencies
+ */
+import { __ } from '@wordpress/i18n';
+
 export const DEFAULT_CATEGORY = 'my-patterns';
 export const DEFAULT_TYPE = 'wp_block';
 export const PATTERNS = 'pattern';
@@ -19,3 +24,10 @@ export const SYNC_TYPES = {
 
 export const filterOutDuplicatesByName = ( currentItem, index, items ) =>
 	index === items.findIndex( ( item ) => currentItem.name === item.name );
+
+export const TEMPLATE_PART_AREA_LABELS = {
+	header: __( 'Headers' ),
+	footer: __( 'Footers' ),
+	sidebar: __( 'Sidebar' ),
+	uncategorized: __( 'Uncategorized' ),
+};

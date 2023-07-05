@@ -22,19 +22,16 @@ import AddNewPattern from '../add-new-pattern';
 import SidebarNavigationItem from '../sidebar-navigation-item';
 import SidebarNavigationScreen from '../sidebar-navigation-screen';
 import CategoryItem from './category-item';
-import { DEFAULT_CATEGORY, DEFAULT_TYPE } from '../page-patterns/utils';
+import {
+	DEFAULT_CATEGORY,
+	DEFAULT_TYPE,
+	TEMPLATE_PART_AREA_LABELS,
+} from '../page-patterns/utils';
 import { store as editSiteStore } from '../../store';
 import { useLink } from '../routes/link';
 import usePatternCategories from './use-pattern-categories';
 import useMyPatterns from './use-my-patterns';
 import useTemplatePartAreas from './use-template-part-areas';
-
-const templatePartAreaLabels = {
-	header: __( 'Headers' ),
-	footer: __( 'Footers' ),
-	sidebar: __( 'Sidebar' ),
-	uncategorized: __( 'Uncategorized' ),
-};
 
 export default function SidebarNavigationScreenPatterns() {
 	const isMobileViewport = useViewportMatch( 'medium', '<' );
@@ -119,7 +116,7 @@ export default function SidebarNavigationScreenPatterns() {
 													area
 												) }
 												label={
-													templatePartAreaLabels[
+													TEMPLATE_PART_AREA_LABELS[
 														area
 													]
 												}
