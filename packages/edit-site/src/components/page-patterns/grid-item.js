@@ -99,6 +99,7 @@ export default function GridItem( { categoryId, composite, icon, item } ) {
 	// Only custom patterns or custom template parts can be renamed or deleted.
 	const isCustomPattern =
 		isUserPattern || ( isTemplatePart && item.isCustom );
+	const hasThemeFile = isTemplatePart && item.templatePart.has_theme_file;
 	const ariaDescriptions = [];
 
 	if ( isCustomPattern ) {
@@ -207,7 +208,7 @@ export default function GridItem( { categoryId, composite, icon, item } ) {
 					>
 						{ ( { onClose } ) => (
 							<MenuGroup>
-								{ isCustomPattern && (
+								{ isCustomPattern && ! hasThemeFile && (
 									<RenameMenuItem
 										item={ item }
 										onClose={ onClose }
@@ -228,7 +229,9 @@ export default function GridItem( { categoryId, composite, icon, item } ) {
 											setIsDeleteDialogOpen( true )
 										}
 									>
-										{ __( 'Delete' ) }
+										{ hasThemeFile
+											? __( 'Clear customizations' )
+											: __( 'Delete' ) }
 									</MenuItem>
 								) }
 							</MenuGroup>
