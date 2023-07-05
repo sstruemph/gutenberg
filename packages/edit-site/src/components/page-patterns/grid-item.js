@@ -24,6 +24,7 @@ import {
 	Icon,
 	header,
 	footer,
+	symbol,
 	symbolFilled,
 	moreHorizontal,
 	lockSmall,
@@ -35,12 +36,12 @@ import { DELETE, BACKSPACE } from '@wordpress/keycodes';
 /**
  * Internal dependencies
  */
-import { PATTERNS, USER_PATTERNS } from './utils';
+import { PATTERNS, USER_PATTERNS, SYNC_TYPES } from './utils';
 import { useLink } from '../routes/link';
 
 const THEME_PATTERN_TOOLTIP = __( 'Theme patterns cannot be edited.' );
 
-export default function GridItem( { categoryId, composite, icon, item } ) {
+export default function GridItem( { categoryId, composite, item } ) {
 	const descriptionId = useId();
 	const [ isDeleteDialogOpen, setIsDeleteDialogOpen ] = useState( false );
 
@@ -99,7 +100,10 @@ export default function GridItem( { categoryId, composite, icon, item } ) {
 		ariaDescriptions.push( THEME_PATTERN_TOOLTIP );
 	}
 
-	let itemIcon = icon;
+	let itemIcon;
+	if ( item.syncStatus === SYNC_TYPES.full ) {
+		itemIcon = symbol;
+	}
 	if ( categoryId === 'header' ) {
 		itemIcon = header;
 	} else if ( categoryId === 'footer' ) {
@@ -153,7 +157,7 @@ export default function GridItem( { categoryId, composite, icon, item } ) {
 						spacing={ 3 }
 						className="edit-site-patterns__pattern-title"
 					>
-						{ icon && (
+						{ itemIcon && (
 							<Icon
 								className="edit-site-patterns__pattern-icon"
 								icon={ itemIcon }
