@@ -32,7 +32,12 @@ export default function PagePatterns() {
 				title={ __( 'Patterns content' ) }
 				hideTitleFromUI
 			>
-				<PatternsList type={ type } categoryId={ category } />
+				<PatternsList
+					// Reset all states on page changes.
+					key={ `${ type }-${ category }` }
+					type={ type }
+					categoryId={ category }
+				/>
 			</Page>
 		</ExperimentalBlockEditorProvider>
 	);

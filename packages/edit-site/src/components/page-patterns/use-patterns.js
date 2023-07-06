@@ -4,7 +4,8 @@
 import { parse } from '@wordpress/blocks';
 import { useSelect } from '@wordpress/data';
 import { store as coreStore } from '@wordpress/core-data';
-import { useMemo } from '@wordpress/element';
+import apiFetch from '@wordpress/api-fetch';
+import { addQueryArgs } from '@wordpress/url';
 
 /**
  * Internal dependencies
@@ -15,7 +16,6 @@ import {
 	SYNC_TYPES,
 	TEMPLATE_PARTS,
 	USER_PATTERNS,
-	USER_PATTERN_CATEGORY,
 	filterOutDuplicatesByName,
 } from './utils';
 import { unlock } from '../../lock-unlock';
@@ -38,115 +38,97 @@ const templatePartToPattern = ( templatePart ) => ( {
 	templatePart,
 } );
 
-const templatePartCategories = [ 'header', 'footer', 'sidebar' ];
-const templatePartHasCategory = ( item, category ) => {
-	if ( category === 'uncategorized' ) {
-		return ! templatePartCategories.includes( item.templatePart.area );
-	}
-
-	return item.templatePart.area === category;
-};
-
-const useTemplatePartsAsPatterns = (
-	categoryId,
-	postType = TEMPLATE_PARTS,
-	{ filterValue = '' } = {}
+const selectTemplatePartsAsPatterns = (
+	select,
+	{ categoryId, search = '', page = 1 } = {}
 ) => {
-	const { templateParts, isResolving } = useSelect(
-		( select ) => {
-			if ( postType !== TEMPLATE_PARTS ) {
-				return {
-					templateParts: EMPTY_PATTERN_LIST,
-					isResolving: false,
-				};
-			}
-
-			const { getEntityRecords, isResolving: _isResolving } =
-				select( coreStore );
-			const query = { per_page: -1 };
-			const rawTemplateParts = getEntityRecords(
-				'postType',
-				postType,
-				query
-			);
-			const partsAsPatterns = rawTemplateParts?.map( ( templatePart ) =>
-				templatePartToPattern( templatePart )
-			);
-
-			return {
-				templateParts: partsAsPatterns,
-				isResolving: _isResolving( 'getEntityRecords', [
-					'postType',
-					'wp_template_part',
-					query,
-				] ),
-			};
-		},
-		[ postType ]
+	const { getEntityRecords, getIsResolving, getEntityConfig } =
+		select( coreStore );
+	const query = {
+		per_page: 20,
+		page,
+		area: categoryId,
+		// TODO: The template parts REST API doesn't support searching yet.
+		search,
+		search_columns: 'post_title',
+	};
+	const rawTemplateParts = getEntityRecords(
+		'postType',
+		TEMPLATE_PARTS,
+		query
 	);
+	const patterns =
+		rawTemplateParts?.map( ( templatePart ) =>
+			templatePartToPattern( templatePart )
+		) ?? EMPTY_PATTERN_LIST;
 
-	const filteredTemplateParts = useMemo( () => {
-		if ( ! templateParts ) {
-			return EMPTY_PATTERN_LIST;
-		}
+	const isResolving = getIsResolving( 'getEntityRecords', [
+		'postType',
+		TEMPLATE_PARTS,
+		query,
+	] );
 
-		return searchItems( templateParts, filterValue, {
-			categoryId,
-			hasCategory: templatePartHasCategory,
+	const getTotalPages = async ( { signal } = {} ) => {
+		const entityConfig = getEntityConfig( 'postType', TEMPLATE_PARTS );
+		const response = await apiFetch( {
+			path: addQueryArgs( entityConfig.baseURL, {
+				...entityConfig.baseURLParams,
+				...query,
+			} ),
+			method: 'HEAD',
+			parse: false,
+			signal,
 		} );
-	}, [ templateParts, filterValue, categoryId ] );
+		return parseInt( response.headers.get( 'X-WP-Totalpages' ), 10 );
+	};
 
-	return { templateParts: filteredTemplateParts, isResolving };
+	return {
+		patterns,
+		isResolving,
+		getTotalPages,
+	};
 };
 
-const useThemePatterns = (
-	categoryId,
-	postType = PATTERNS,
-	{ filterValue = '' } = {}
+const selectThemePatterns = (
+	select,
+	{ categoryId, search = '', page = 1 } = {}
 ) => {
-	const blockPatterns = useSelect( ( select ) => {
-		const { getSettings } = unlock( select( editSiteStore ) );
-		const settings = getSettings();
-		return (
-			settings.__experimentalAdditionalBlockPatterns ??
-			settings.__experimentalBlockPatterns
-		);
+	const { getSettings } = unlock( select( editSiteStore ) );
+	const settings = getSettings();
+	const blockPatterns =
+		settings.__experimentalAdditionalBlockPatterns ??
+		settings.__experimentalBlockPatterns;
+
+	const restBlockPatterns = select( coreStore ).getBlockPatterns();
+
+	let patterns = [
+		...( blockPatterns || [] ),
+		...( restBlockPatterns || [] ),
+	]
+		.filter(
+			( pattern ) => ! CORE_PATTERN_SOURCES.includes( pattern.source )
+		)
+		.filter( filterOutDuplicatesByName )
+		.map( ( pattern ) => ( {
+			...pattern,
+			keywords: pattern.keywords || [],
+			type: 'pattern',
+			blocks: parse( pattern.content ),
+		} ) );
+
+	patterns = searchItems( patterns, search, {
+		categoryId,
+		hasCategory: ( item, currentCategory ) =>
+			item.categories?.includes( currentCategory ),
 	} );
 
-	const restBlockPatterns = useSelect( ( select ) =>
-		select( coreStore ).getBlockPatterns()
-	);
+	patterns = patterns.slice( ( page - 1 ) * 20, page * 20 );
 
-	const patterns = useMemo(
-		() =>
-			[ ...( blockPatterns || [] ), ...( restBlockPatterns || [] ) ]
-				.filter(
-					( pattern ) =>
-						! CORE_PATTERN_SOURCES.includes( pattern.source )
-				)
-				.filter( filterOutDuplicatesByName )
-				.map( ( pattern ) => ( {
-					...pattern,
-					keywords: pattern.keywords || [],
-					type: 'pattern',
-					blocks: parse( pattern.content ),
-				} ) ),
-		[ blockPatterns, restBlockPatterns ]
-	);
-
-	const filteredPatterns = useMemo( () => {
-		if ( postType !== PATTERNS ) {
-			return EMPTY_PATTERN_LIST;
-		}
-
-		return searchItems( patterns, filterValue, {
-			categoryId,
-			hasCategory: ( item, currentCategory ) =>
-				item.categories?.includes( currentCategory ),
-		} );
-	}, [ patterns, filterValue, categoryId, postType ] );
-
-	return filteredPatterns;
+	return {
+		patterns,
+		isResolving: false,
+		getTotalPages: async () => Math.ceil( patterns.length / 20 ),
+	};
 };
 
 const reusableBlockToPattern = ( reusableBlock ) => ( {
@@ -160,92 +142,84 @@ const reusableBlockToPattern = ( reusableBlock ) => ( {
 	reusableBlock,
 } );
 
-const useUserPatterns = (
-	categoryId,
-	categoryType = PATTERNS,
-	{ filterValue = '', syncFilter } = {}
+const selectUserPatterns = (
+	select,
+	{ search = '', syncStatus, page = 1 } = {}
 ) => {
-	const postType = categoryType === PATTERNS ? USER_PATTERNS : categoryType;
-	let { patterns, isResolving } = useSelect(
-		( select ) => {
-			if (
-				postType !== USER_PATTERNS ||
-				categoryId !== USER_PATTERN_CATEGORY
-			) {
-				return { patterns: EMPTY_PATTERN_LIST, isResolving: false };
-			}
+	const { getEntityRecords, getIsResolving, getEntityConfig } =
+		select( coreStore );
 
-			const { getEntityRecords, isResolving: _isResolving } =
-				select( coreStore );
+	const query = {
+		per_page: 20,
+		page,
+		search,
+		search_columns: 'post_title',
+		sync_status: syncStatus,
+	};
+	const records = getEntityRecords( 'postType', USER_PATTERNS, query );
 
-			const query = { per_page: -1 };
-			const records = getEntityRecords( 'postType', postType, query );
+	const isResolving = getIsResolving( 'getEntityRecords', [
+		'postType',
+		USER_PATTERNS,
+		query,
+	] );
 
-			return {
-				patterns: records
-					? records.map( ( record ) =>
-							reusableBlockToPattern( record )
-					  )
-					: EMPTY_PATTERN_LIST,
-				isResolving: _isResolving( 'getEntityRecords', [
-					'postType',
-					postType,
-					query,
-				] ),
-			};
-		},
-		[ postType, categoryId ]
-	);
+	const patterns = records
+		? records.map( ( record ) => reusableBlockToPattern( record ) )
+		: EMPTY_PATTERN_LIST;
 
-	patterns = useMemo( () => {
-		if ( ! syncFilter ) {
-			return patterns;
-		}
-		return patterns.filter(
-			( pattern ) => pattern.syncStatus === syncFilter
-		);
-	}, [ patterns, syncFilter ] );
-
-	patterns = useMemo( () => {
-		if ( ! patterns.length ) {
-			return EMPTY_PATTERN_LIST;
-		}
-
-		return searchItems( patterns, filterValue, {
-			// We exit user pattern retrieval early if we aren't in the
-			// catch-all category for user created patterns, so it has
-			// to be in the category.
-			hasCategory: () => true,
+	const getTotalPages = async ( { signal } = {} ) => {
+		const entityConfig = getEntityConfig( 'postType', USER_PATTERNS );
+		const response = await apiFetch( {
+			path: addQueryArgs( entityConfig.baseURL, {
+				...entityConfig.baseURLParams,
+				...query,
+			} ),
+			method: 'HEAD',
+			parse: false,
+			signal,
 		} );
-	}, [ patterns, filterValue ] );
+		return parseInt( response.headers.get( 'X-Wp-Totalpages' ), 10 );
+	};
 
-	return { patterns, isResolving };
+	return { patterns, isResolving, getTotalPages };
 };
 
 export const usePatterns = (
 	categoryType,
 	categoryId,
-	{ filterValue = '', syncFilter }
+	{ search = '', page = 1, syncStatus }
 ) => {
-	const blockPatterns = useThemePatterns( categoryId, categoryType, {
-		filterValue,
-	} );
-
-	const { patterns: userPatterns, isResolving: isResolvingUserPatterns } =
-		useUserPatterns( categoryId, categoryType, {
-			filterValue,
-			syncFilter,
-		} );
-
-	const { templateParts, isResolving: isResolvingTemplateParts } =
-		useTemplatePartsAsPatterns( categoryId, categoryType, { filterValue } );
-
-	const patterns = useMemo(
-		() => [ ...templateParts, ...userPatterns, ...blockPatterns ],
-		[ templateParts, userPatterns, blockPatterns ]
+	return useSelect(
+		( select ) => {
+			if ( categoryType === TEMPLATE_PARTS ) {
+				return selectTemplatePartsAsPatterns( select, {
+					categoryId,
+					search,
+					page,
+					syncStatus,
+				} );
+			} else if ( categoryType === PATTERNS ) {
+				return selectThemePatterns( select, {
+					categoryId,
+					search,
+					page,
+				} );
+			} else if ( categoryType === USER_PATTERNS ) {
+				return selectUserPatterns( select, {
+					search,
+					syncStatus,
+					page,
+				} );
+			}
+			return {
+				patterns: EMPTY_PATTERN_LIST,
+				isResolving: false,
+				getTotalPages: async () => 1,
+			};
+		},
+		[ categoryType, categoryId, search, page, syncStatus ]
 	);
-
-	return [ patterns, isResolvingUserPatterns || isResolvingTemplateParts ];
 };
 
 export default usePatterns;
