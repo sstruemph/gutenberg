@@ -18,7 +18,7 @@ import {
 	Flex,
 } from '@wordpress/components';
 import { useDispatch } from '@wordpress/data';
-import { useState, useId } from '@wordpress/element';
+import { useState, useId, memo } from '@wordpress/element';
 import { __, sprintf } from '@wordpress/i18n';
 import {
 	Icon,
@@ -41,7 +41,7 @@ import { useLink } from '../routes/link';
 
 const THEME_PATTERN_TOOLTIP = __( 'Theme patterns cannot be edited.' );
 
-export default function GridItem( { categoryId, composite, item } ) {
+function GridItem( { categoryId, item, ...props } ) {
 	const descriptionId = useId();
 	const [ isDeleteDialogOpen, setIsDeleteDialogOpen ] = useState( false );
 
@@ -119,7 +119,8 @@ export default function GridItem( { categoryId, composite, item } ) {
 					className={ previewClassNames }
 					role="option"
 					as="div"
-					{ ...composite }
+					id={ `edit-site-patterns-${ item.name }` }
+					{ ...props }
 					onClick={ item.type !== PATTERNS ? onClick : undefined }
 					onKeyDown={ isUserPattern ? onKeyDown : undefined }
 					aria-label={ item.title }
@@ -230,3 +231,5 @@ export default function GridItem( { categoryId, composite, item } ) {
 		</>
 	);
 }
+
+export default memo( GridItem );
