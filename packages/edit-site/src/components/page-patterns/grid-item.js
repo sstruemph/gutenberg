@@ -110,14 +110,11 @@ export default function GridItem( { categoryId, composite, icon, item } ) {
 
 	return (
 		<>
-			<div className={ patternClassNames }>
-				<CompositeItem
-					className={ previewClassNames }
+			<CompositeItem className={ patternClassNames } as="li">
+				<div
 					role="option"
-					as="div"
+					className={ previewClassNames }
 					{ ...composite }
-					onClick={ item.type !== PATTERNS ? onClick : undefined }
-					onKeyDown={ isUserPattern ? onKeyDown : undefined }
 					aria-label={ item.title }
 					aria-describedby={
 						ariaDescriptions.length
@@ -132,7 +129,7 @@ export default function GridItem( { categoryId, composite, icon, item } ) {
 				>
 					{ isEmpty && __( 'Empty pattern' ) }
 					{ ! isEmpty && <BlockPreview blocks={ item.blocks } /> }
-				</CompositeItem>
+				</div>
 				{ ariaDescriptions.map( ( ariaDescription, index ) => (
 					<div
 						key={ index }
@@ -197,7 +194,7 @@ export default function GridItem( { categoryId, composite, icon, item } ) {
 								// keyboard as this would interfere with the grid's
 								// roving tab index system. Instead, keyboard users
 								// use keyboard shortcuts to trigger actions.
-								tabIndex: -1,
+								//tabIndex: 1,
 							} }
 						>
 							{ () => (
@@ -214,7 +211,7 @@ export default function GridItem( { categoryId, composite, icon, item } ) {
 						</DropdownMenu>
 					) }
 				</HStack>
-			</div>
+			</CompositeItem>
 			{ isDeleteDialogOpen && (
 				<ConfirmDialog
 					onConfirm={ deletePattern }

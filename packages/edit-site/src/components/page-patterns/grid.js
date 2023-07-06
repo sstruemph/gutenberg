@@ -22,6 +22,7 @@ export default function Grid( { categoryId, label, icon, items } ) {
 		<Composite
 			{ ...composite }
 			role="listbox"
+			as="ul"
 			className="edit-site-patterns__grid"
 			aria-label={ label }
 		>
